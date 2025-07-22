@@ -140,11 +140,12 @@ func (c *OrderRepositoryImp) FindById(id int) (*model.Order, error) {
 
 func (c *OrderRepositoryImp) Update(order *model.Order) (*model.Order, error) {
 	query := `
-	UPDATE orders SET order_date=?, pickup_date=?, dropoff_date=?, pickup_location=?, dropoff_location=? 
+	UPDATE orders SET car_id=?, order_date=?, pickup_date=?, dropoff_date=?, pickup_location=?, dropoff_location=? 
 	WHERE order_id=? RETURNING *
 	`
 	row := c.DB.QueryRow(
 		query,
+		order.CarId,
 		order.OrderDate.Format(time.RFC3339),
 		order.PickupDate.Format(time.RFC3339),
 		order.DropoffDate.Format(time.RFC3339),
@@ -164,9 +165,20 @@ func (c *OrderRepositoryImp) Update(order *model.Order) (*model.Order, error) {
 		&updatedOrder.DropoffLocation)
 
 	if err != nil {
+		fmt.Println(err.Error())
+		msg := "Failed to update order"
+
+		if strings.Contains(err.Error(), "FOREIGN KEY") {
+			msg = "Car not found!"
+		}
+
+		if strings.Contains(err.Error(), "no rows in result set") {
+			msg = "Order not found!"
+		}
+
 		return nil, fiber.NewError(
 			fiber.StatusBadRequest,
-			"Failed to update order",
+			msg,
 		)
 	}
 

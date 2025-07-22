@@ -30,7 +30,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"car_name\": \"Lamborgini\",\n    \"day_rate\": 23423.334,\n    \"month_rate\": 23423.334,\n    \"image\": \"test_url\"\n}",
+							"raw": "{\n    \"car_name\": \"Avanzasa\",\n    \"day_rate\": 23235.34,\n    \"month_rate\": 32453.334,\n    \"image\": \"test_url\"\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -73,7 +73,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"car_id\": 6,\n    \"car_name\": \"Lamborgini Aventador\",\n    \"day_rate\": 23423.334,\n    \"month_rate\": 23423.334,\n    \"image\": \"test_url\"\n}",
+							"raw": "{\n    \"car_id\": 1,\n    \"car_name\": \"Lamborgini\",\n    \"day_rate\": 23423.334,\n    \"month_rate\": 23423.334,\n    \"image\": \"test_url\"\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -115,7 +115,7 @@
 							}
 						],
 						"url": {
-							"raw": "http://localhost:3000/api/cars/9",
+							"raw": "http://localhost:3000/api/cars/1",
 							"protocol": "http",
 							"host": [
 								"localhost"
@@ -124,7 +124,7 @@
 							"path": [
 								"api",
 								"cars",
-								"9"
+								"1"
 							]
 						}
 					},
@@ -184,7 +184,7 @@
 							}
 						],
 						"url": {
-							"raw": "http://localhost:3000/api/cars/6",
+							"raw": "http://localhost:3000/api/cars/1",
 							"protocol": "http",
 							"host": [
 								"localhost"
@@ -193,7 +193,7 @@
 							"path": [
 								"api",
 								"cars",
-								"6"
+								"1"
 							]
 						}
 					},
@@ -225,7 +225,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"car_id\": 1,\n    \"order_date\": \"2025-07-22T12:00:02Z\",\n    \"pickup_date\": \"2025-07-06T12:00:02Z\",\n    \"dropoff_date\": \"2025-07-07T09:00:02Z\",\n    \"pickup_location\": \"test_pickup_loc\",\n    \"dropoff_location\": \"test_drop_loc\"\n}",
+							"raw": "{\n    \"car_id\": 1,\n    \"pickup_date\": \"2025-07-13T12:00:02Z\",\n    \"dropoff_date\": \"2025-07-20T12:00:02Z\",\n    \"pickup_location\": \"test_pickup_loc\",\n    \"dropoff_location\": \"test_drop_loc\"\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -268,7 +268,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"order_id\": 1,\n    \"order_date\": \"2025-07-22T12:00:02Z\",\n    \"pickup_date\": \"2025-07-22T18:00:02Z\",\n    \"dropoff_date\": \"2025-07-29T09:00:02Z\",\n    \"pickup_location\": \"test_pickup_loc\",\n    \"dropoff_location\": \"test_dsssdsssrop_loc\"\n}",
+							"raw": "{\n    \"order_id\": 5,\n    \"car_id\": 5,\n    \"order_date\": \"2025-07-22T12:00:02Z\",\n    \"pickup_date\": \"2025-07-22T18:00:02Z\",\n    \"dropoff_date\": \"2025-07-29T09:00:02Z\",\n    \"pickup_location\": \"test_pickup_loc\",\n    \"dropoff_location\": \"test_tetsaet_loc\"\n}",
 							"options": {
 								"raw": {
 									"language": "json"

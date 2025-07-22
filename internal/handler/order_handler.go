@@ -81,9 +81,7 @@ func (h *OrderHandler) UpdateOrder(c *fiber.Ctx) error {
 
 	updatedOrder, err := h.Usecase.UpdateOrder(order)
 	if err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": "Failed to update Order",
-		})
+		return err
 	}
 	return c.JSON(fiber.Map{
 		"message": "Update Order successful",
