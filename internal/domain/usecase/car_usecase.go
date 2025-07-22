@@ -25,7 +25,7 @@ func (u *CarUsecase) CreateCar(car *model.Car) (*model.Car, error) {
 	return u.repo.Create(car)
 }
 
-func (u *CarUsecase) UpdateCar(car *model.Car) error {
+func (u *CarUsecase) UpdateCar(car *model.Car) (*model.Car, error) {
 	return u.repo.Update(car)
 }
 

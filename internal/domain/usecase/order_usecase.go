@@ -25,7 +25,7 @@ func (u *OrderUsecase) CreateOrder(Order *model.Order) (*model.Order, error) {
 	return u.repo.Create(Order)
 }
 
-func (u *OrderUsecase) UpdateOrder(Order *model.Order) error {
+func (u *OrderUsecase) UpdateOrder(Order *model.Order) (*model.Order, error) {
 	return u.repo.Update(Order)
 }
 

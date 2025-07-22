@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/gofiber/fiber/v2"
 	"github.com/steradian_test/internal/domain/model"
 )
 
@@ -20,16 +21,45 @@ func NewOrderRepositoryImpl(db *sql.DB) *OrderRepositoryImp {
 
 func (c *OrderRepositoryImp) Create(order *model.Order) (*model.Order, error) {
 	if order.PickupDate.After(order.DropoffDate) {
-		return nil, fmt.Errorf("tanggal pickup harus sebelum dropoff")
+		return nil, fiber.NewError(
+			fiber.StatusBadRequest,
+			"Pickup Date must be lower than or equals Dropoff Date")
 	}
 
-	row := c.DB.QueryRow("INSERT INTO orders (car_id, pickup_date, dropoff_date, pickup_location, dropoff_location) SELECT ?,?,?,?,? WHERE NOT EXISTS (SELECT 1 FROM orders WHERE car_id=? AND pickup_date <= ?  AND dropoff_date >= ?) RETURNING *", &order.CarId, order.PickupDate.Format(time.RFC3339), order.DropoffDate.Format(time.RFC3339), &order.PickupLocation, &order.DropoffLocation, &order.CarId, order.DropoffDate.Format(time.RFC3339), order.PickupDate.Format(time.RFC3339))
+	query := `
+	INSERT INTO orders (car_id, pickup_date, dropoff_date, pickup_location, dropoff_location) 
+	SELECT ?,?,?,?,? WHERE NOT EXISTS 
+	(SELECT 1 FROM orders WHERE car_id=? AND pickup_date <= ?  AND dropoff_date >= ?) 
+	RETURNING *
+	`
+	row := c.DB.QueryRow(
+		query,
+		&order.CarId,
+		order.PickupDate.Format(time.RFC3339),
+		order.DropoffDate.Format(time.RFC3339),
+		&order.PickupLocation,
+		&order.DropoffLocation,
+		&order.CarId,
+		order.DropoffDate.Format(time.RFC3339),
+		order.PickupDate.Format(time.RFC3339))
+
 	var newOrder model.Order
 	var orderDateStr, pickupDateStr, dropoffDateStr string
-	err := row.Scan(&newOrder.OrderId, &newOrder.CarId, &orderDateStr, &pickupDateStr, &dropoffDateStr, &newOrder.PickupLocation, &newOrder.DropoffLocation)
+
+	err := row.Scan(
+		&newOrder.OrderId,
+		&newOrder.CarId,
+		&orderDateStr,
+		&pickupDateStr,
+		&dropoffDateStr,
+		&newOrder.PickupLocation,
+		&newOrder.DropoffLocation)
 
 	if err != nil {
-		return nil, fmt.Errorf("RENTED")
+		return nil, fiber.NewError(
+			fiber.StatusBadRequest,
+			"Car is being rented",
+		)
 	}
 	newOd, _ := time.Parse(time.RFC3339, orderDateStr)
 	newOrder.OrderDate = &newOd
@@ -44,14 +74,23 @@ func (c *OrderRepositoryImp) FindAll() ([]model.Order, error) {
 		return nil, err
 	}
 	defer rows.Close()
-	var orders []model.Order
+
+	orders := []model.Order{}
 	for rows.Next() {
 		var order model.Order
 		var orderDateStr, pickupDateStr, dropoffDateStr string
 
-		err = rows.Scan(&order.OrderId, &order.CarId, &orderDateStr, &pickupDateStr, &dropoffDateStr, &order.PickupLocation, &order.DropoffLocation)
+		err = rows.Scan(
+			&order.OrderId,
+			&order.CarId,
+			&orderDateStr,
+			&pickupDateStr,
+			&dropoffDateStr,
+			&order.PickupLocation,
+			&order.DropoffLocation)
+
 		if err != nil {
-			//
+			// error to scan
 		}
 		newOd, _ := time.Parse(time.RFC3339, orderDateStr)
 		order.OrderDate = &newOd
@@ -67,7 +106,16 @@ func (c *OrderRepositoryImp) FindById(id int) (*model.Order, error) {
 	row := c.DB.QueryRow("SELECT * FROM orders WHERE order_id=?", id)
 	var order model.Order
 	var orderDateStr, pickupDateStr, dropoffDateStr string
-	err := row.Scan(&order.OrderId, &order.CarId, &orderDateStr, &pickupDateStr, &dropoffDateStr, &order.PickupLocation, &order.DropoffLocation)
+
+	err := row.Scan(
+		&order.OrderId,
+		&order.CarId,
+		&orderDateStr,
+		&pickupDateStr,
+		&dropoffDateStr,
+		&order.PickupLocation,
+		&order.DropoffLocation)
+
 	if err != nil {
 		return nil, err
 	}
@@ -78,12 +126,43 @@ func (c *OrderRepositoryImp) FindById(id int) (*model.Order, error) {
 	return &order, nil
 }
 
-func (c *OrderRepositoryImp) Update(order *model.Order) error {
-	_, err := c.DB.Exec("UPDATE orders SET order_date=?, pickup_date=?, dropoff_date=?, pickup_location=?, dropoff_location=? WHERE order_id=?", order.OrderDate.Format(time.RFC3339), order.PickupDate.Format(time.RFC3339), order.DropoffDate.Format(time.RFC3339), order.PickupLocation, &order.DropoffLocation, &order.OrderId)
+func (c *OrderRepositoryImp) Update(order *model.Order) (*model.Order, error) {
+	query := `
+	UPDATE orders SET order_date=?, pickup_date=?, dropoff_date=?, pickup_location=?, dropoff_location=? 
+	WHERE order_id=? RETURNING *
+	`
+	row := c.DB.QueryRow(
+		query,
+		order.OrderDate.Format(time.RFC3339),
+		order.PickupDate.Format(time.RFC3339),
+		order.DropoffDate.Format(time.RFC3339),
+		order.PickupLocation,
+		&order.DropoffLocation,
+		&order.OrderId)
+
+	var updatedOrder model.Order
+	var orderDateStr, pickupDateStr, dropoffDateStr string
+	err := row.Scan(
+		&updatedOrder.OrderId,
+		&updatedOrder.CarId,
+		&orderDateStr,
+		&pickupDateStr,
+		&dropoffDateStr,
+		&updatedOrder.PickupLocation,
+		&updatedOrder.DropoffLocation)
+
 	if err != nil {
-		return err
+		return nil, err
 	}
-	return nil
+
+	newOd, _ := time.Parse(time.RFC3339, orderDateStr)
+	updatedOrder.OrderDate = &newOd
+	updatedOrder.PickupDate, _ = time.Parse(time.RFC3339, pickupDateStr)
+	updatedOrder.DropoffDate, _ = time.Parse(time.RFC3339, dropoffDateStr)
+	if err != nil {
+		return nil, err
+	}
+	return &updatedOrder, nil
 }
 
 func (c *OrderRepositoryImp) Delete(orderId int) error {

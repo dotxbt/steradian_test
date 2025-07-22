@@ -3,6 +3,7 @@ package repositoryimpl
 import (
 	"database/sql"
 
+	"github.com/gofiber/fiber/v2"
 	"github.com/steradian_test/internal/domain/model"
 )
 
@@ -17,15 +18,24 @@ func NewCarRepositoryImpl(db *sql.DB) *CarRepositoryImp {
 }
 
 func (c *CarRepositoryImp) Create(car *model.Car) (*model.Car, error) {
-	result, err := c.DB.Exec("INSERT INTO cars(car_name, day_rate, month_rate, image) VALUES (?,?,?,?) RETURNING car_id", &car.CarName, &car.DayRate, &car.MonthRate, &car.Image)
+	query := `
+	INSERT INTO cars(car_name, day_rate, month_rate, image) 
+	VALUES (?,?,?,?) RETURNING car_id
+	`
+	var carId int
+	err := c.DB.QueryRow(
+		query,
+		&car.CarName,
+		&car.DayRate,
+		&car.MonthRate,
+		&car.Image).Scan(&carId)
+
 	if err != nil {
-		return nil, err
+		return nil, fiber.NewError(
+			fiber.StatusBadRequest,
+			"Failed to create car, please check your data again",
+		)
 	}
-	id, err := result.LastInsertId()
-	if err != nil {
-		return nil, err
-	}
-	carId := int(id)
 	car.CarId = &carId
 	return car, nil
 }
@@ -33,13 +43,23 @@ func (c *CarRepositoryImp) Create(car *model.Car) (*model.Car, error) {
 func (c *CarRepositoryImp) FindAll() ([]model.Car, error) {
 	rows, err := c.DB.Query("SELECT * FROM cars")
 	if err != nil {
-		return nil, err
+		return nil, fiber.NewError(
+			fiber.StatusBadRequest,
+			"No Data!",
+		)
 	}
 	defer rows.Close()
-	var cars []model.Car
+
+	cars := []model.Car{}
 	for rows.Next() {
 		var car model.Car
-		err = rows.Scan(&car.CarId, &car.CarName, &car.DayRate, &car.MonthRate, &car.Image)
+		err = rows.Scan(
+			&car.CarId,
+			&car.CarName,
+			&car.DayRate,
+			&car.MonthRate,
+			&car.Image)
+
 		if err != nil {
 			//
 		}
@@ -51,25 +71,61 @@ func (c *CarRepositoryImp) FindAll() ([]model.Car, error) {
 func (c *CarRepositoryImp) FindById(id int) (*model.Car, error) {
 	row := c.DB.QueryRow("SELECT * FROM cars WHERE car_id=?", id)
 	var car model.Car
-	err := row.Scan(&car.CarId, &car.CarName, &car.DayRate, &car.MonthRate, &car.Image)
+	err := row.Scan(
+		&car.CarId,
+		&car.CarName,
+		&car.DayRate,
+		&car.MonthRate,
+		&car.Image)
+
 	if err != nil {
-		return nil, err
+		return nil, fiber.NewError(
+			fiber.StatusBadRequest,
+			"Car not found!",
+		)
 	}
 	return &car, nil
 }
-func (c *CarRepositoryImp) Update(carReq *model.Car) error {
-	_, err := c.DB.Exec("UPDATE cars SET car_name=?, day_rate=?, month_rate=?, image=? WHERE car_id=?", &carReq.CarName, &carReq.DayRate, &carReq.MonthRate, &carReq.Image, &carReq.CarId)
+func (c *CarRepositoryImp) Update(carReq *model.Car) (*model.Car, error) {
+	query := `
+	UPDATE cars SET car_name=?, day_rate=?, month_rate=?, image=? 
+	WHERE car_id=? RETURNING *
+	`
+	row := c.DB.QueryRow(
+		query,
+		&carReq.CarName,
+		&carReq.DayRate,
+		&carReq.MonthRate,
+		&carReq.Image,
+		&carReq.CarId)
+
+	var car model.Car
+	err := row.Scan(
+		&car.CarId,
+		&car.CarName,
+		&car.DayRate,
+		&car.MonthRate,
+		&car.Image)
 
 	if err != nil {
-		return err
+		return nil, fiber.NewError(
+			fiber.StatusBadRequest,
+			"Failed to update car, please check your data again",
+		)
 	}
-	return nil
+	return &car, nil
 }
 
 func (c *CarRepositoryImp) Delete(carId int) error {
-	_, err := c.DB.Exec("DELETE FROM cars WHERE car_id=?", carId)
+	query := `
+	DELETE FROM cars WHERE car_id=?
+	`
+	_, err := c.DB.Exec(query, carId)
 	if err != nil {
-		return err
+		return fiber.NewError(
+			fiber.StatusBadRequest,
+			"Car not found!",
+		)
 	}
 	return nil
 }

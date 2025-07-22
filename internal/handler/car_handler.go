@@ -76,19 +76,22 @@ func (h *CarHandler) GetCarById(c *fiber.Ctx) error {
 func (h *CarHandler) UpdateCar(c *fiber.Ctx) error {
 	car := new(model.Car)
 	if err := c.BodyParser(car); err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": "Invalid data car",
-		})
+		return fiber.NewError(
+			fiber.StatusBadRequest,
+			"Failed update car",
+		)
 	}
 
-	err := h.Usecase.UpdateCar(car)
+	updatedCar, err := h.Usecase.UpdateCar(car)
 	if err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": "Failed to update Car",
-		})
+		return fiber.NewError(
+			fiber.StatusBadRequest,
+			err.Error(),
+		)
 	}
 	return c.JSON(fiber.Map{
 		"message": "Update Car successful",
+		"data":    updatedCar,
 	})
 }
 

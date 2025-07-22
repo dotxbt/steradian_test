@@ -25,21 +25,13 @@ func (h *OrderHandler) CreateOrder(c *fiber.Ctx) error {
 	Order := new(model.Order)
 	if err := c.BodyParser(Order); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": "Invalid data Order Request",
+			"error": "Invalid Request data Order ",
 		})
 	}
 
 	Order, err := h.Usecase.CreateOrder(Order)
 	if err != nil {
-		errs := err.Error()
-		if errs == "RENTED" {
-			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-				"error": "Car is being rented",
-			})
-		}
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": "Failed create a Order",
-		})
+		return err
 	}
 	return c.JSON(fiber.Map{
 		"message": "Create Order successful",
@@ -80,14 +72,14 @@ func (h *OrderHandler) GetOrderById(c *fiber.Ctx) error {
 }
 
 func (h *OrderHandler) UpdateOrder(c *fiber.Ctx) error {
-	Order := new(model.Order)
-	if err := c.BodyParser(Order); err != nil {
+	order := new(model.Order)
+	if err := c.BodyParser(order); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"error": "Invalid data Order",
 		})
 	}
 
-	err := h.Usecase.UpdateOrder(Order)
+	updatedOrder, err := h.Usecase.UpdateOrder(order)
 	if err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"error": "Failed to update Order",
@@ -95,6 +87,7 @@ func (h *OrderHandler) UpdateOrder(c *fiber.Ctx) error {
 	}
 	return c.JSON(fiber.Map{
 		"message": "Update Order successful",
+		"data":    updatedOrder,
 	})
 }
 
