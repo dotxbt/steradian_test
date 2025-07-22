@@ -19,27 +19,23 @@ func NewOrderRepositoryImpl(db *sql.DB) *OrderRepositoryImp {
 }
 
 func (c *OrderRepositoryImp) Create(order *model.Order) (*model.Order, error) {
-	result, err := c.DB.Exec("INSERT INTO orders (car_id, order_date, pickup_date, dropoff_date, pickup_location, dropoff_location) SELECT ?,?,?,?,?,? WHERE NOT EXISTS (SELECT 1 FROM orders WHERE car_id=? AND ((? BETWEEN pickup_date AND dropoff_date) OR (? BETWEEN pickup_date AND dropoff_date))) RETURNING order_id", &order.CarId, order.OrderDate.Format(time.RFC3339), order.PickupDate.Format(time.RFC3339), order.DropoffDate.Format(time.RFC3339), &order.PickupLocation, &order.DropoffLocation, &order.CarId, order.PickupDate.Format(time.RFC3339), order.DropoffDate.Format(time.RFC3339))
-	if err != nil {
-		return nil, err
+	if order.PickupDate.After(order.DropoffDate) {
+		return nil, fmt.Errorf("tanggal pickup harus sebelum dropoff")
 	}
 
-	rowsAffected, err := result.RowsAffected()
-	if err != nil {
-		return nil, err
-	}
-	id, err := result.LastInsertId()
-	if err != nil {
-		return nil, err
-	}
+	row := c.DB.QueryRow("INSERT INTO orders (car_id, pickup_date, dropoff_date, pickup_location, dropoff_location) SELECT ?,?,?,?,? WHERE NOT EXISTS (SELECT 1 FROM orders WHERE car_id=? AND pickup_date <= ?  AND dropoff_date >= ?) RETURNING *", &order.CarId, order.PickupDate.Format(time.RFC3339), order.DropoffDate.Format(time.RFC3339), &order.PickupLocation, &order.DropoffLocation, &order.CarId, order.DropoffDate.Format(time.RFC3339), order.PickupDate.Format(time.RFC3339))
+	var newOrder model.Order
+	var orderDateStr, pickupDateStr, dropoffDateStr string
+	err := row.Scan(&newOrder.OrderId, &newOrder.CarId, &orderDateStr, &pickupDateStr, &dropoffDateStr, &newOrder.PickupLocation, &newOrder.DropoffLocation)
 
-	if rowsAffected == 0 || id == 0 {
+	if err != nil {
 		return nil, fmt.Errorf("RENTED")
 	}
-
-	orderId := int(id)
-	order.OrderId = &orderId
-	return order, nil
+	newOd, _ := time.Parse(time.RFC3339, orderDateStr)
+	newOrder.OrderDate = &newOd
+	newOrder.PickupDate, _ = time.Parse(time.RFC3339, pickupDateStr)
+	newOrder.DropoffDate, _ = time.Parse(time.RFC3339, dropoffDateStr)
+	return &newOrder, nil
 }
 
 func (c *OrderRepositoryImp) FindAll() ([]model.Order, error) {
@@ -57,7 +53,8 @@ func (c *OrderRepositoryImp) FindAll() ([]model.Order, error) {
 		if err != nil {
 			//
 		}
-		order.OrderDate, _ = time.Parse(time.RFC3339, orderDateStr)
+		newOd, _ := time.Parse(time.RFC3339, orderDateStr)
+		order.OrderDate = &newOd
 		order.PickupDate, _ = time.Parse(time.RFC3339, pickupDateStr)
 		order.DropoffDate, _ = time.Parse(time.RFC3339, dropoffDateStr)
 		orders = append(orders, order)
@@ -74,7 +71,8 @@ func (c *OrderRepositoryImp) FindById(id int) (*model.Order, error) {
 	if err != nil {
 		return nil, err
 	}
-	order.OrderDate, _ = time.Parse(time.RFC3339, orderDateStr)
+	newOd, _ := time.Parse(time.RFC3339, orderDateStr)
+	order.OrderDate = &newOd
 	order.PickupDate, _ = time.Parse(time.RFC3339, pickupDateStr)
 	order.DropoffDate, _ = time.Parse(time.RFC3339, dropoffDateStr)
 	return &order, nil

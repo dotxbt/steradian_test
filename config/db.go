@@ -25,7 +25,7 @@ func InitDB() *sql.DB {
 	 CREATE TABLE IF NOT EXISTS orders (
 	 	order_id INTEGER PRIMARY KEY AUTOINCREMENT,
 		car_id INTEGER NOT NULL,
-		order_date TEXT NOT NULL,
+		order_date TEXT DEFAULT (datetime('now')),
 		pickup_date TEXT NOT NULL,
 		dropoff_date TEXT NOT NULL,
 		pickup_location TEXT NOT NULL,
