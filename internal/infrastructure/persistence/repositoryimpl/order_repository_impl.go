@@ -19,9 +19,7 @@ func NewOrderRepositoryImpl(db *sql.DB) *OrderRepositoryImp {
 }
 
 func (c *OrderRepositoryImp) Create(order *model.Order) (*model.Order, error) {
-	// logic to check range date pickup
-
-	result, err := c.DB.Exec("INSERT INTO orders (car_id, order_date, pickup_date, dropoff_date, pickup_location, dropoff_location) SELECT ?,?,?,?,?,? WHERE NOT EXISTS (SELECT 1 FROM orders WHERE car_id=? AND pickup_date <= ? AND dropoff_date >= ?) RETURNING order_id", &order.CarId, order.OrderDate.Format(time.RFC3339), order.PickupDate.Format(time.RFC3339), order.DropoffDate.Format(time.RFC3339), &order.PickupLocation, &order.DropoffLocation, &order.CarId, order.PickupDate.Format(time.RFC3339), order.DropoffDate.Format(time.RFC3339))
+	result, err := c.DB.Exec("INSERT INTO orders (car_id, order_date, pickup_date, dropoff_date, pickup_location, dropoff_location) SELECT ?,?,?,?,?,? WHERE NOT EXISTS (SELECT 1 FROM orders WHERE car_id=? AND ((? BETWEEN pickup_date AND dropoff_date) OR (? BETWEEN pickup_date AND dropoff_date))) RETURNING order_id", &order.CarId, order.OrderDate.Format(time.RFC3339), order.PickupDate.Format(time.RFC3339), order.DropoffDate.Format(time.RFC3339), &order.PickupLocation, &order.DropoffLocation, &order.CarId, order.PickupDate.Format(time.RFC3339), order.DropoffDate.Format(time.RFC3339))
 	if err != nil {
 		return nil, err
 	}
@@ -30,14 +28,15 @@ func (c *OrderRepositoryImp) Create(order *model.Order) (*model.Order, error) {
 	if err != nil {
 		return nil, err
 	}
-	if rowsAffected == 0 {
-		return nil, fmt.Errorf("RENTED")
-	}
-
 	id, err := result.LastInsertId()
 	if err != nil {
 		return nil, err
 	}
+
+	if rowsAffected == 0 || id == 0 {
+		return nil, fmt.Errorf("RENTED")
+	}
+
 	orderId := int(id)
 	order.OrderId = &orderId
 	return order, nil
