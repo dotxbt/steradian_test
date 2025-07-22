@@ -61,7 +61,7 @@ func (c *CarRepositoryImp) FindAll() ([]model.Car, error) {
 			&car.Image)
 
 		if err != nil {
-			//
+			// skip ??
 		}
 		cars = append(cars, car)
 	}
@@ -116,16 +116,15 @@ func (c *CarRepositoryImp) Update(carReq *model.Car) (*model.Car, error) {
 	return &car, nil
 }
 
-func (c *CarRepositoryImp) Delete(carId int) error {
-	query := `
-	DELETE FROM cars WHERE car_id=?
-	`
-	_, err := c.DB.Exec(query, carId)
+func (c *CarRepositoryImp) Delete(carId int) (*string, error) {
+	var carName string
+	err := c.DB.QueryRow("DELETE FROM cars WHERE car_id=? RETURNING car_name", carId).Scan(&carName)
 	if err != nil {
-		return fiber.NewError(
+		return nil, fiber.NewError(
 			fiber.StatusBadRequest,
 			"Car not found!",
 		)
 	}
-	return nil
+	res := "Success delete : " + carName + "!"
+	return &res, nil
 }

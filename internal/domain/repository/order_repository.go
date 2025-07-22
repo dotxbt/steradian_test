@@ -7,5 +7,5 @@ type OrderRepository interface {
 	FindAll() ([]model.Order, error)
 	FindById(carId int) (*model.Order, error)
 	Update(car *model.Order) (*model.Order, error)
-	Delete(carId int) error
+	Delete(carId int) (*string, error)
 }

@@ -29,6 +29,6 @@ func (u *CarUsecase) UpdateCar(car *model.Car) (*model.Car, error) {
 	return u.repo.Update(car)
 }
 
-func (u *CarUsecase) DeleteCar(id int) error {
+func (u *CarUsecase) DeleteCar(id int) (*string, error) {
 	return u.repo.Delete(id)
 }

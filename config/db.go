@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"fmt"
 
+	"github.com/gofiber/fiber/v2"
 	_ "github.com/mattn/go-sqlite3"
 )
 
@@ -35,8 +36,11 @@ func InitDB() *sql.DB {
 	`
 	_, er := db.Exec(schema)
 	if er != nil {
-		fmt.Println(err.Error())
-		// log.Panic(err.Error())
+		panic(fiber.NewError(fiber.StatusInternalServerError, "Upd! something happen with my service"))
+	}
+	_, err = db.Exec("PRAGMA foreign_keys = ON;")
+	if err != nil {
+		panic(fiber.NewError(fiber.StatusInternalServerError, "Upd! something happen with my service"))
 	}
 	return db
 }

@@ -29,6 +29,6 @@ func (u *OrderUsecase) UpdateOrder(Order *model.Order) (*model.Order, error) {
 	return u.repo.Update(Order)
 }
 
-func (u *OrderUsecase) DeleteOrder(id int) error {
+func (u *OrderUsecase) DeleteOrder(id int) (*string, error) {
 	return u.repo.Delete(id)
 }

@@ -3,6 +3,7 @@ package repositoryimpl
 import (
 	"database/sql"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/gofiber/fiber/v2"
@@ -56,9 +57,18 @@ func (c *OrderRepositoryImp) Create(order *model.Order) (*model.Order, error) {
 		&newOrder.DropoffLocation)
 
 	if err != nil {
+		msg := "Ups! something error!"
+		if strings.Contains(err.Error(), "FOREIGN KEY") {
+			msg = "Car not found!"
+		}
+
+		if strings.Contains(err.Error(), "no rows in result set") {
+			msg = "Car is being rented"
+		}
+
 		return nil, fiber.NewError(
 			fiber.StatusBadRequest,
-			"Car is being rented",
+			msg,
 		)
 	}
 	newOd, _ := time.Parse(time.RFC3339, orderDateStr)
@@ -102,7 +112,6 @@ func (c *OrderRepositoryImp) FindAll() ([]model.Order, error) {
 }
 
 func (c *OrderRepositoryImp) FindById(id int) (*model.Order, error) {
-	fmt.Println(id)
 	row := c.DB.QueryRow("SELECT * FROM orders WHERE order_id=?", id)
 	var order model.Order
 	var orderDateStr, pickupDateStr, dropoffDateStr string
@@ -117,7 +126,10 @@ func (c *OrderRepositoryImp) FindById(id int) (*model.Order, error) {
 		&order.DropoffLocation)
 
 	if err != nil {
-		return nil, err
+		return nil, fiber.NewError(
+			fiber.StatusBadRequest,
+			"Order not found!",
+		)
 	}
 	newOd, _ := time.Parse(time.RFC3339, orderDateStr)
 	order.OrderDate = &newOd
@@ -152,23 +164,28 @@ func (c *OrderRepositoryImp) Update(order *model.Order) (*model.Order, error) {
 		&updatedOrder.DropoffLocation)
 
 	if err != nil {
-		return nil, err
+		return nil, fiber.NewError(
+			fiber.StatusBadRequest,
+			"Failed to update order",
+		)
 	}
 
 	newOd, _ := time.Parse(time.RFC3339, orderDateStr)
 	updatedOrder.OrderDate = &newOd
 	updatedOrder.PickupDate, _ = time.Parse(time.RFC3339, pickupDateStr)
 	updatedOrder.DropoffDate, _ = time.Parse(time.RFC3339, dropoffDateStr)
-	if err != nil {
-		return nil, err
-	}
 	return &updatedOrder, nil
 }
 
-func (c *OrderRepositoryImp) Delete(orderId int) error {
-	_, err := c.DB.Exec("DELETE FROM orders WHERE order_id=?", orderId)
+func (c *OrderRepositoryImp) Delete(orderId int) (*string, error) {
+	var deletedId int
+	err := c.DB.QueryRow("DELETE FROM orders WHERE order_id=? RETURNING order_id", orderId).Scan(&deletedId)
 	if err != nil {
-		return err
+		return nil, fiber.NewError(
+			fiber.StatusBadRequest,
+			"Order not found!",
+		)
 	}
-	return nil
+	res := "Delete order with ID " + fmt.Sprint(deletedId) + " successfull"
+	return &res, nil
 }

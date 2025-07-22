@@ -98,13 +98,11 @@ func (h *OrderHandler) DeleteOrder(c *fiber.Ctx) error {
 			"error": "Invalid ID Id, ID must be a number",
 		})
 	}
-	err = h.Usecase.DeleteOrder(id)
+	res, err := h.Usecase.DeleteOrder(id)
 	if err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": "Order Not Found!",
-		})
+		return err
 	}
 	return c.JSON(fiber.Map{
-		"message": "Delete Orders successful",
+		"message": res,
 	})
 }

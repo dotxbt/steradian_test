@@ -63,9 +63,7 @@ func (h *CarHandler) GetCarById(c *fiber.Ctx) error {
 	}
 	car, err := h.Usecase.GetCarById(id)
 	if err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": "Car Not Found!",
-		})
+		return err
 	}
 	return c.JSON(fiber.Map{
 		"message": "Get Cars successful",
@@ -102,13 +100,13 @@ func (h *CarHandler) DeleteCar(c *fiber.Ctx) error {
 			"error": "Invalid ID Id, ID must be a number",
 		})
 	}
-	err = h.Usecase.DeleteCar(id)
+	res, err := h.Usecase.DeleteCar(id)
 	if err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"error": "Car Not Found!",
 		})
 	}
 	return c.JSON(fiber.Map{
-		"message": "Delete Cars successful",
+		"message": res,
 	})
 }
